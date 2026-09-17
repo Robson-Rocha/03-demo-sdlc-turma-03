@@ -8,6 +8,46 @@ namespace TrainingCatalog.Api.Tests;
 public sealed class TrainingCreationTests
 {
     [Fact]
+    public async Task ReturnsBadRequestWhenDurationExceedsFourHours()
+    {
+        using var factory = new TrainingCatalogApiFactory();
+        using var client = factory.CreateClient();
+        var request = new CreateTrainingRequest(
+            "Fundamentos de C#",
+            "Introdução ao C#",
+            "2026-09-15",
+            5);
+
+        var response = await client.PostAsJsonAsync("/api/trainings", request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var error = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal(
+            "A carga horária não pode ser maior que 4 horas.",
+            error.RootElement.GetProperty("errors").GetProperty("durationHours")[0].GetString());
+    }
+
+    [Fact]
+    public async Task ReturnsBadRequestWhenDurationIsZero()
+    {
+        using var factory = new TrainingCatalogApiFactory();
+        using var client = factory.CreateClient();
+        var request = new CreateTrainingRequest(
+            "Fundamentos de C#",
+            "Introdução ao C#",
+            "2026-09-15",
+            0);
+
+        var response = await client.PostAsJsonAsync("/api/trainings", request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var error = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal(
+            "A carga horária deve ser maior que zero.",
+            error.RootElement.GetProperty("errors").GetProperty("durationHours")[0].GetString());
+    }
+
+    [Fact]
     public async Task ReturnsConflictWhenStartDateAlreadyExists()
     {
         using var factory = new TrainingCatalogApiFactory();
@@ -16,7 +56,7 @@ public sealed class TrainingCreationTests
             "Fundamentos de C#",
             "Introdução ao C#",
             "2026-09-15",
-            8);
+            4);
 
         var firstResponse = await client.PostAsJsonAsync("/api/trainings", request);
         var secondResponse = await client.PostAsJsonAsync(
