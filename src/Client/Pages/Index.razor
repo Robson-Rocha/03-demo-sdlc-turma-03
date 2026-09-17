@@ -251,7 +251,7 @@
         return value switch
         {
             <= 0 => "A carga horária deve ser maior que zero.",
-            > 4 => "A carga horária deve estar entre 1 e 4 horas.",
+            > 4 => "A carga horária não pode ser maior que 4 horas.",
             _ => null
         };
     }
