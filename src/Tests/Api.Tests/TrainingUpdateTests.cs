@@ -63,6 +63,23 @@ public sealed class TrainingUpdateTests
     }
 
     [Fact]
+    public async Task ReturnsBadRequestWhenUpdatedDurationIsLessThanOrEqualToZero()
+    {
+        using var factory = new TrainingCatalogApiFactory();
+        using var client = factory.CreateClient();
+        var training = await CreateTraining(client, "2026-09-15");
+        var request = new CreateTrainingRequest("C# Avançado", "Tópicos avançados de C#", "2026-09-16", 0);
+
+        var response = await client.PutAsJsonAsync($"/api/trainings/{training.Id}", request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var error = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal(
+            "A carga horária deve ser maior que zero.",
+            error.RootElement.GetProperty("errors").GetProperty("durationHours")[0].GetString());
+    }
+
+    [Fact]
     public async Task ReturnsNotFoundWhenIdentifierDoesNotExist()
     {
         using var factory = new TrainingCatalogApiFactory();
