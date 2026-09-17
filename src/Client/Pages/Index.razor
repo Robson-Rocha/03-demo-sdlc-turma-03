@@ -28,7 +28,7 @@
                                 <MudDatePicker @bind-Date="startDate" Label="Data de início" DateFormat="dd/MM/yyyy" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true" RequiredError="A data de início é obrigatória." Error='@HasFieldError("startDate")' ErrorText='@GetFieldError("startDate")' Disabled="@isSubmitting" />
                             </MudItem>
                             <MudItem xs="12" sm="5">
-                                <MudNumericField @bind-Value="durationHours" Label="Carga horária" Variant="Variant.Outlined" Margin="Margin.Dense" Min="1" Required="true" RequiredError="A carga horária deve ser maior que zero." Error='@HasFieldError("durationHours")' ErrorText='@GetFieldError("durationHours")' Disabled="@isSubmitting" />
+                                <MudNumericField @bind-Value="durationHours" Label="Carga horária" Variant="Variant.Outlined" Margin="Margin.Dense" Min="1" Max="4" HelperText="De 1 a 4 horas." Required="true" RequiredError="A carga horária é obrigatória." Validation="@(new Func<int?, string?>(ValidateDurationHours))" Error='@HasFieldError("durationHours")' ErrorText='@GetFieldError("durationHours")' Disabled="@isSubmitting" />
                             </MudItem>
                         </MudGrid>
 
@@ -110,7 +110,7 @@
     private string title = string.Empty;
     private string description = string.Empty;
     private DateTime? startDate;
-    private int durationHours;
+    private int? durationHours;
     private string? errorMessage;
     private string? successMessage;
     private bool isLoading = true;
@@ -167,7 +167,7 @@
                 title,
                 description,
                 startDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
-                durationHours);
+                durationHours ?? 0);
             using var response = await Http.PostAsJsonAsync("api/trainings", request);
 
             if (response.IsSuccessStatusCode)
@@ -243,6 +243,17 @@
         title = string.Empty;
         description = string.Empty;
         startDate = null;
-        durationHours = 0;
+        durationHours = null;
+    }
+
+    private static string? ValidateDurationHours(int? value)
+    {
+        return value switch
+        {
+            null => "A carga horária é obrigatória.",
+            <= 0 => "A carga horária deve ser maior que zero.",
+            > 4 => "A carga horária não pode ser maior que 4 horas.",
+            _ => null
+        };
     }
 }
